@@ -150,6 +150,6 @@ class ThecrossdesignSpider(scrapy.Spider):
         items["created"] = int(time.time())
         items["updated"] = int(time.time())
         items['is_deleted'] = 0
-        detection_main(items=items, website=website, num=10, skulist=True, skulist_attributes=True)
+        # detection_main(items=items, website=website, num=10, skulist=True, skulist_attributes=True)
         # print(items)
         yield items
