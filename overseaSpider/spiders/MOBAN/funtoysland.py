@@ -170,6 +170,7 @@ class ThecrossdesignSpider(scrapy.Spider):
                     sku_attr["other"] = other_temp
                 sku_info["current_price"] = skuAttr_json[key1]["_salePrice"]
                 sku_info["original_price"] = skuAttr_json[key1]["_price"]
+                sku_info["url"] = response.url
                 sku_info["attributes"] = sku_attr
                 sku_info["imgs"] = img_list
                 sku_list.append(sku_info)

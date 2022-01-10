@@ -10,9 +10,9 @@ from overseaSpider.util.utils import isLinux
 
 from overseaSpider.items import ShopItem, SkuAttributesItem, SkuItem
 
-site_name = 'phase5boards'  # 站名 如 'shopweareiconic'
-domain_name = 'phase5boards.com'  # 完整域名 如 'shopweareiconic.com'
-url_prefix = 'https://www.phase5boards.com'  # URL 前缀 如 'https://shopweareiconic.com'
+site_name = 'marigoldgrey'  # 站名 如 'shopweareiconic'
+domain_name = 'marigoldgrey.com'  # 完整域名 如 'shopweareiconic.com'
+url_prefix = 'https://www.marigoldgrey.com'  # URL 前缀 如 'https://shopweareiconic.com'
 
 currency_json_data = None
 
@@ -136,7 +136,7 @@ class ShopweareiconicSpider(scrapy.Spider):
     def __init__(self, **kwargs):
         super(ShopweareiconicSpider, self).__init__(**kwargs)
         self.counts = 0
-        setattr(self, 'author', "叶复")
+        setattr(self, 'author', "汀幡")
 
     is_debug = True
     custom_debug_settings = {
@@ -223,15 +223,15 @@ class ShopweareiconicSpider(scrapy.Spider):
             shop_item['is_deleted'] = 0
 
             # 1. 详情页没有类目信息的情况：直接从 product_type 字段解析类目，一般 product_type 会是最细一级类目的名称
-            shop_item["cat"] = parse_category_by_product_type(item_obj['product_type'], False)
-            shop_item["detail_cat"] = parse_category_by_product_type(item_obj['product_type'], True)
+            shop_item["cat"] = item_obj['title']
+            shop_item["detail_cat"] = 'Home/'+item_obj['title']
 
             # 2. 详情页有类目信息的情况，注释掉上面两行，请求详情页，从详情页里解析类目信息
             # requests.get ...
 
             yield shop_item
             # print('=======')
-            print(shop_item)
+            # print(shop_item)
 
         if len(items_list) > 0:
             coms = list(parse.urlparse(response.url))

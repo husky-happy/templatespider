@@ -10,9 +10,9 @@ from overseaSpider.util.utils import isLinux
 
 from overseaSpider.items import ShopItem, SkuAttributesItem, SkuItem
 
-site_name = 'phase5boards'  # 站名 如 'shopweareiconic'
-domain_name = 'phase5boards.com'  # 完整域名 如 'shopweareiconic.com'
-url_prefix = 'https://www.phase5boards.com'  # URL 前缀 如 'https://shopweareiconic.com'
+site_name = 'medipal'  # 站名 如 'shopweareiconic'
+domain_name = 'medipal.my'  # 完整域名 如 'shopweareiconic.com'
+url_prefix = 'https://medipal.my'  # URL 前缀 如 'https://shopweareiconic.com'
 
 currency_json_data = None
 
@@ -128,7 +128,6 @@ class ShopweareiconicSpider(scrapy.Spider):
         system = isLinux()
         if not system:
             # 如果不是服务器, 则修改相关配置
-            # 'CLOSESPIDER_ITEMCOUNT' : 10,#检测个数
             custom_debug_settings["HTTPCACHE_ENABLED"] = False
             custom_debug_settings["MONGODB_SERVER"] = "127.0.0.1"
         settings.setdict(custom_debug_settings or {}, priority='spider')
@@ -136,7 +135,7 @@ class ShopweareiconicSpider(scrapy.Spider):
     def __init__(self, **kwargs):
         super(ShopweareiconicSpider, self).__init__(**kwargs)
         self.counts = 0
-        setattr(self, 'author', "叶复")
+        setattr(self, 'author', "阿斌")
 
     is_debug = True
     custom_debug_settings = {
@@ -192,19 +191,7 @@ class ShopweareiconicSpider(scrapy.Spider):
             fill_attributes_and_description(shop_item, item_obj)
 
             shop_item["source"] = site_name
-            img_list = list(map(lambda obj: obj['src'], item_obj['images']))
-            ####### 第二个图片做为主图
-            # if len(img_list) > 1:
-            #     img_list_1 = [img_list[1]]
-            #     for i in img_list:
-            #         if i not in img_list_1:
-            #             img_list_1.append(i)
-            #     shop_item["images"] = img_list_1
-            # else:
-            #     shop_item["images"] = img_list
-            ####### 正常
-            shop_item["images"] = img_list
-            ###############################
+            shop_item["images"] = list(map(lambda obj: obj['src'], item_obj['images']))
             shop_item["sku_list"] = list(
                 map(lambda sku: translate_sku_data(sku, item_obj['options']), item_obj['variants']))
 
@@ -228,10 +215,14 @@ class ShopweareiconicSpider(scrapy.Spider):
 
             # 2. 详情页有类目信息的情况，注释掉上面两行，请求详情页，从详情页里解析类目信息
             # requests.get ...
-
-            yield shop_item
-            # print('=======')
-            print(shop_item)
+            product_url = item_obj["handle"]
+            if product_url:
+                product_url = url_prefix + f"/products/{product_url}"
+                yield scrapy.Request(
+                    url=product_url,
+                    callback=self.parse_cat_imgs,
+                    meta={"shop_item": shop_item}
+                )
 
         if len(items_list) > 0:
             coms = list(parse.urlparse(response.url))
@@ -247,3 +238,29 @@ class ShopweareiconicSpider(scrapy.Spider):
                     # 'cart_currency': 'USD'
                 }
             )
+
+    def parse_cat_imgs(self, response):
+        shop_item = response.meta["shop_item"]
+        # 如果images有null取消注释以下images代码，并手动从详情页获取images_list
+        # if not shop_item["images"]:
+        #     images_list = response.xpath("//abc/@abc").getall()
+        #     if len(images_list) >= 2:
+        #         images_list = ["https:" + i for i in images_list]
+        #         for img in images_list:
+        #             if img not in shop_item["images"]:
+        #                 shop_item["images"].append(img)
+
+        # 如果详情页没有breadcrumb或为Home + name则全部注释
+        # 如果详情页有breadcrumb，取消下面多行注释，并自行抓取breadcrumb_list
+        # shop_item["cat"] = ""
+        # shop_item["detail_cat"] = ""
+        # if not shop_item["cat"] or not shop_item["detail_cat"]:
+        #     Breadcrumb_list = response.xpath("//nav[contains(@class, 'breadcrumb')]//a/span/text()").getall()
+        #     Breadcrumb_list.append(shop_item["name"])
+        # if not Breadcrumb_list:
+        #     Breadcrumb_list = ["Home", shop_item["name"]]
+        # shop_item["cat"] = Breadcrumb_list[-1]
+        # shop_item["detail_cat"] = "/".join(Breadcrumb_list)
+
+        # print(shop_item)
+        yield shop_item

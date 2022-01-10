@@ -11,19 +11,20 @@ from overseaSpider.items import ShopItem, SkuAttributesItem, SkuItem
 from overseaSpider.util import item_check
 from overseaSpider.util.scriptdetection import detection_main
 from overseaSpider.util.utils import isLinux
+from scrapy.selector import Selector
 
 # !/usr/bin/env python
 # -*- coding: UTF-8 -*-
 '''=================================================
-@Project -> File   ：templatespider -> pufferbelliestoys
+@Project -> File   ：templatespider -> happyanimalsonline
 @IDE    ：PyCharm
 @Author ：Mr. Husky
-@Date   ：2021/12/14 16:51
+@Date   ：2021/12/28 15:54
 @Desc   ：
 =================================================='''
 
-website = 'pufferbelliestoys'
-
+website = 'happyanimalsonline'
+website_url = 'https://www.happyanimalsonline.com'
 
 def get_sku_price(product_id, attribute_list):
     """获取sku价格"""
@@ -41,8 +42,8 @@ def get_sku_price(product_id, attribute_list):
 
 class ThecrossdesignSpider(scrapy.Spider):
     name = website
-    allowed_domains = ['pufferbelliestoys.com']
-    start_urls = ['https://www.pufferbelliestoys.com/']
+    allowed_domains = ['happyanimalsonline.com']
+    start_urls = ['https://www.happyanimalsonline.com/']
 
     @classmethod
     def update_settings(cls, settings):
@@ -103,7 +104,7 @@ class ThecrossdesignSpider(scrapy.Spider):
                        u'\u2028', u'\u2029', u'\u202f', u'\u205f', u'\u3000', u'\xA0', u'\u180E',
                        u'\u200A', u'\u202F', u'\u205F', '\r\n\r\n', '/', '**', '>>', '\\n\\t\\t', '\\n        ',
                        '\\n\\t  ', '&#x27;', '`', '&lt;', 'p&gt;', 'amp;', 'b&gt;', '&gt;', 'br ', '$', '€', ',', '\n',
-                       '¥']
+                       '¥', '₺']
         for index in filter_list:
             input_text = input_text.replace(index, "").strip()
         return input_text
@@ -121,51 +122,47 @@ class ThecrossdesignSpider(scrapy.Spider):
 
     def parse(self, response):
         """获取全部分类"""
-        category_urls = ['https://www.pufferbelliestoys.com/shop']
+        category_urls = ['https://www.happyanimalsonline.com/kedi-213',
+                         'https://www.happyanimalsonline.com/kopek-218']
         for category_url in category_urls:
-            yield scrapy.Request(url=category_url, callback=self.parse_brand)
-
-    def parse_brand(self, response):
-        category_urls = response.xpath("//table[@class='shop-category-table']//tr/td/div/a/@href").getall()
-        category_brand = response.xpath("//table[@class='shop-category-table']//tr/td/div/a/span/text()").getall()
-        for c in range(len(category_urls)):
-            yield scrapy.Request(url=category_urls[c], callback=self.parse_list, meta={"cat": category_brand[c]})
+            yield scrapy.Request(url=category_url, callback=self.parse_list, meta={"url":category_url})
 
     def parse_list(self, response):
         """商品列表页"""
-        cate = response.meta.get("cat")
-        detail_url_list = response.xpath("//div[@class='product-entry']/a/@href").getall()
-        # detail_url_list = ['https://www.pufferbelliestoys.com/kel-12esmina/kellytoy/12-squishmallow-esmina-the-fairy']
+        response_url = response.meta.get("url")
+        detail_url_list = response.xpath("//div[@id='ProductPageProductList']/div/div/div/a/@href").getall()
         for detail_url in detail_url_list:
-            yield scrapy.Request(url=detail_url, callback=self.parse_detail, meta={"cat":cate})
-        next_page_url = response.xpath("//a[@title='next page']/@href").get()
+            detail_url = website_url + detail_url
+            yield scrapy.Request(url=detail_url, callback=self.parse_detail)
+        next_page_url = response.xpath("//div[@class='pageBorder']/a[text()='>']/@href").get()
         if next_page_url:
-            yield scrapy.Request(url=next_page_url, callback=self.parse_list, meta={"cat":cate})
+            next_page_url = response_url + next_page_url
+            yield scrapy.Request(url=next_page_url, callback=self.parse_list, meta={"url":response_url})
 
     def parse_detail(self, response):
         """详情页"""
         items = ShopItem()
         items["url"] = response.url
 
-        cate = response.meta.get("cat")
-
-        price = response.xpath("//div[@class='buy border_bottom']//span[@class='price']/text()").get()
+        price = response.xpath("//span[@class='spanFiyat']/text()").get()
+        price = price.replace(",",'.')
         price = self.price_fliter(price)
         items["original_price"] = price
-        items["current_price"] = price
+        items["current_price"] = items["original_price"]
 
-        name = response.xpath("//h1/text()").get()
+        name = response.xpath("//h1/span/text()").get()
+        name = self.filter_text(name)
         items["name"] = name
 
-        cat_list = [cate, name]
+        cat_list = response.xpath("//ul[@class='breadcrumb']/li/a/span/text()").getall()
         if cat_list:
             cat_list = [cat.strip() for cat in cat_list if cat.strip()]
             items["cat"] = cat_list[-1]
             items["detail_cat"] = '/'.join(cat_list)
 
-        description = response.xpath("//div[@class='description']").getall()
-        items["description"] = self.filter_text(self.filter_html_label(''.join(description)))
-        items["source"] = 'pufferbelliestoys.com'
+        description = response.xpath("//meta[@property='og:description']/@content").get()
+        items["description"] = description
+        items["source"] = 'happyanimalsonline.com'
 
         # attr1_list = response.xpath("//div[@class='single-car-data']/table//tr/td[1]/text()").getall()
         # attr2_list = response.xpath("//div[@class='single-car-data']/table//tr/td[2]/text()").getall()
@@ -173,26 +170,17 @@ class ThecrossdesignSpider(scrapy.Spider):
         # for a in range(len(attr1_list)):
         #     attribute.append(attr1_list[a] + ":" + attr2_list[a])
         # items["attributes"] = attribute
-
-        images_list = response.xpath("//ul[@id='thumbnails']/li/img/@src").getall()
-        if not images_list:
-            images_list = response.xpath("//div[@id='image_view_box']/a/img/@src").getall()
-        for i in range(len(images_list)):
-            if images_list[i].find("noimage")!=-1 or images_list[i].find("png")!=-1:
-                return
-            index = -1
-            if images_list[i].find(".136x136")!=-1:
-                index = images_list[i].find(".136x136")
-            if images_list[i].find(".200x200")!=-1:
-                index = images_list[i].find(".200x200")
-            if index!=-1:
-                images_list[i]="https:"+images_list[i][:index]+".jpg"
-            # images_list[i] = "http:" + images_list[i]
-        if len(images_list)==0:
-            return
+        img_str = response.xpath("//div[@id='divThumbList']/div/img/@data-cloudzoom").getall()
+        images_list = []
+        for i in img_str:
+            img_json = json.loads(i)
+            images_list.append(website_url+img_json['zoomImage'])
         items["images"] = images_list
-        brand = response.xpath("//li[@class='spec-brand']//a/text()").get()
-        items["brand"] = brand
+        brand = response.xpath("//div[@id='divMarka']/span[@class='right_line Marka']/a/span/text()").get()
+        if brand:
+            items["brand"] = brand
+        else:
+            items["brand"] = ''
 
         items["sku_list"] = []
 

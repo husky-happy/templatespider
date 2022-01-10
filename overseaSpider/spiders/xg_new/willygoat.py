@@ -5,28 +5,32 @@ from sys import prefix
 import time
 from urllib import parse
 import scrapy
+import requests
 from hashlib import md5
 from overseaSpider.util.utils import isLinux
+from lxml import etree
 
 from overseaSpider.items import ShopItem, SkuAttributesItem, SkuItem
 
-site_name = 'phase5boards'  # 站名 如 'shopweareiconic'
-domain_name = 'phase5boards.com'  # 完整域名 如 'shopweareiconic.com'
-url_prefix = 'https://www.phase5boards.com'  # URL 前缀 如 'https://shopweareiconic.com'
+author = '方块'
+site_name = 'willygoat'
+domain_name = 'willygoat.com'
+url_prefix = 'https://willygoat.com'
 
 currency_json_data = None
+cat_type = False#自定义
+detail_cat_type = False#自定义
+
 
 
 def convert_currency(price):
-    # 这里是个强硬的货币转换（基于 shopify 自己的实时汇率表），部分非美元站点的美元价格是直接这样转来的。慎用，还是优先做美元站吧
-    # _from = 'EUR'
+    # _from = 'AUD'
     # to = 'USD'
     # return '${:.2f}'.format(price * currency_json_data[_from] / currency_json_data[to])
-    # 如无需转换：
+    # or 无需转换
     return '{:.2f}'.format(price)
 
 
-# 把 shopify 格式的 SKU 信息转换成我们的格式，一般不用改
 def translate_sku_data(raw_sku_data, options_arr):
     sku_item = SkuItem()
     sku_item['current_price'] = convert_currency(float(raw_sku_data['price']))
@@ -50,7 +54,6 @@ def translate_sku_data(raw_sku_data, options_arr):
     return sku_item
 
 
-# 尝试从 shopify 的 product_type 字段解析出类目信息的函数
 def parse_category_by_product_type(product_type, full):
     separators = [' - ', ' > ', '>']
     for separator in separators:
@@ -64,7 +67,15 @@ def parse_category_by_product_type(product_type, full):
     return product_type.replace("/", "／")
 
 
-# 从 SKU 列表中提取出最低现价（最终展示的现价）
+def parse_category_by_tags(tags):
+    prefixes = ['type-', '__cat:', 'custom-category-']
+    for tag in tags:
+        for prefix in prefixes:
+            if tag.lower().startswith(prefix):
+                return tag[len(prefix):]
+    return ''
+
+
 def item_display_price(skus):
     min_price = float(skus[0]['price'])
     for sku in skus:
@@ -72,7 +83,6 @@ def item_display_price(skus):
     return convert_currency(min_price)
 
 
-# 从 SKU 列表中提取出最高原价（最终展示的原价）
 def item_original_price(skus):
     max_price = 0.0
     for sku in skus:
@@ -81,7 +91,6 @@ def item_original_price(skus):
     return convert_currency(max_price) if max_price > 0 else item_display_price(skus)
 
 
-# 检测是否不缺货（是否所有 SKU 都有库存）
 def item_is_available(skus):
     for sku in skus:
         if bool(sku['available']) and float(sku['price']) > 0:
@@ -89,7 +98,6 @@ def item_is_available(skus):
     return False
 
 
-# 解析 attributes 和 description（部分站点需要调整）
 def fill_attributes_and_description(shop_item, item_obj):
     body_html = item_obj['body_html']
 
@@ -117,26 +125,27 @@ def filter_text(input_text):
     return re.sub(r'\s+', ' ', input_text)
 
 
-class ShopweareiconicSpider(scrapy.Spider):
+class AasportsSpider(scrapy.Spider):
     name = site_name
     allowed_domains = [domain_name]
 
     @classmethod
     def update_settings(cls, settings):
+        # settings.setdict(getattr(cls, 'custom_debug_settings' if getattr(cls, 'is_debug', False) else 'custom_settings', None) or {}, priority='spider')
         custom_debug_settings = getattr(cls, 'custom_debug_settings' if getattr(cls, 'is_debug',
                                                                                 False) else 'custom_settings', None)
         system = isLinux()
         if not system:
             # 如果不是服务器, 则修改相关配置
-            # 'CLOSESPIDER_ITEMCOUNT' : 10,#检测个数
             custom_debug_settings["HTTPCACHE_ENABLED"] = False
+            custom_debug_settings["HTTPCACHE_DIR"] = "/Users/cagey/PycharmProjects/mogu_projects/scrapy_cache"
             custom_debug_settings["MONGODB_SERVER"] = "127.0.0.1"
         settings.setdict(custom_debug_settings or {}, priority='spider')
 
     def __init__(self, **kwargs):
-        super(ShopweareiconicSpider, self).__init__(**kwargs)
+        super(AasportsSpider, self).__init__(**kwargs)
         self.counts = 0
-        setattr(self, 'author', "叶复")
+        setattr(self, 'author', author)
 
     is_debug = True
     custom_debug_settings = {
@@ -144,69 +153,128 @@ class ShopweareiconicSpider(scrapy.Spider):
         'CONCURRENT_REQUESTS': 4,
         'DOWNLOAD_DELAY': 1,
         'LOG_LEVEL': 'DEBUG',
-        'COOKIES_ENABLED': True,
-        # 'HTTPCACHE_EXPIRATION_SECS': 14 * 24 * 60 * 60, # 秒
+        'COOKIES_ENABLED': False,
+        'HTTPCACHE_ALWAYS_STORE': False,
+        'HTTPCACHE_ENABLED': True,
+        'HTTPCACHE_EXPIRATION_SECS': 7 * 24 * 60 * 60,  # 秒
+        # 'HTTPCACHE_DIR': "/Users/cagey/PycharmProjects/mogu_projects/scrapy_cache",
         'DOWNLOADER_MIDDLEWARES': {
             # 'overseaSpider.middlewares.PhantomjsUpdateCookieMiddleware': 543,
+            # 'overseaSpider.middlewares.OverseaspiderDownloaderMiddleware': 543,
             # 'overseaSpider.middlewares.OverseaspiderProxyMiddleware': 400,
             'overseaSpider.middlewares.OverseaspiderUserAgentMiddleware': 100,
         },
         'ITEM_PIPELINES': {
             'overseaSpider.pipelines.OverseaspiderPipeline': 300,
         },
+        # 'HTTPCACHE_POLICY': 'scrapy.extensions.httpcache.DummyPolicy',
+        # 'HTTPCACHE_POLICY': 'scrapy.extensions.httpcache.RFC2616Policy',
+        'HTTPCACHE_POLICY': 'overseaSpider.middlewares.DummyPolicy',
     }
+    def filter_html_label(self, text, type):
+        html_labels_zhushi = re.findall('(<!--[\s\S]*?-->)', text)  # 注释
+        if html_labels_zhushi:
+            for zhushi in html_labels_zhushi:
+                text = text.replace(zhushi, '')
+        html_labels = re.findall(r'<[^>]+>', text)  # html标签
+        if type == 1:
+            for h in html_labels:
+
+                text = text.replace(h, '')
+
+        text = text.replace('\n', '').replace('\r', '').replace('\t', '').replace('  ', '').replace('&amp;','&').strip()
+        return text
 
     def start_requests(self):
         yield scrapy.Request(url=url_prefix + '/services/javascripts/currencies.js',
                              callback=self.get_currency_rates, )  # 获取汇率转换表
 
     def get_currency_rates(self, response):
-        currency_json_str = re.search(r'rates:\s*(\{.*?\})', response.text).group(1)
+        currency_json_str = re.search(r'rates: (\{.*?\})', response.text).group(1)
         global currency_json_data
         currency_json_data = json.loads(currency_json_str)
-
-        # limit 最大为 250，超过无效，勿改
         yield scrapy.Request(url=url_prefix + '/products.json?page=1&limit=250', callback=self.parse, cookies={
             'cart_currency': 'USD'
-        })
+        })  # limit 最大为 250，超过无效
+
 
     def parse(self, response):
-
         json_data = json.loads(response.text)
         items_list = list(json_data['products'])
 
         for item_obj in items_list:
-            # 不对劲的商品，直接过滤掉不管
-            if not item_is_available(item_obj['variants']) or len(list(item_obj['images'])) == 0:
+
+            if not item_is_available(item_obj['variants']):
+                continue
+
+            if len(list(item_obj['images'])) == 0:
                 continue
 
             shop_item = ShopItem()
-
-            shop_item["url"] = url_prefix + '/products/' + str(item_obj['handle'])
-            shop_item["brand"] = item_obj['vendor']
-            shop_item["name"] = item_obj['title']
-
+            page_url = url_prefix + '/products/' + str(item_obj['handle'])
+            shop_item["url"] = str(page_url).strip()
             shop_item["current_price"] = item_display_price(item_obj['variants'])
             shop_item["original_price"] = item_original_price(item_obj['variants'])
+            shop_item["brand"] = item_obj['vendor']
+            names = item_obj['title']
+            shop_item["name"] = names
 
+            # shop_item["cat"] = parse_category_by_tags(item_obj['tags'])
+            requests_num = 0
+            cats = parse_category_by_product_type(item_obj['product_type'], False)
+            if cat_type==False:
+                if str(cats).strip() != '':
+                    shop_item["cat"] = cats
+                else:
+                    shop_item["cat"] = names
+            else:
+                res = requests.get(page_url)
+                if res.status_code == 200:
+                    requests_num = 1
+                    res_html = etree.HTML(res.text, parser=etree.HTMLParser(encoding="utf-8"))
+                    li_last = res_html.xpath('(//ol[@class="breadcrumb__list"]//li)[last()]')
+                    if li_last != None:
+                        li_last = etree.tostring(li_last[0], method='html', with_tail=False, encoding='utf-8').decode()
+                        li_last = self.filter_html_label(li_last, 1)
+                        shop_item['cat'] = li_last
+                else:
+                    shop_item["cat"] = names
+            detail_cat = parse_category_by_product_type(item_obj['product_type'], True)
+            if detail_cat_type == False:
+                if str(detail_cat).strip() != '':
+                    shop_item["detail_cat"] = parse_category_by_product_type(item_obj['product_type'], True)
+                else:
+                    shop_item["detail_cat"] = 'HOME/' + names
+            else:
+                if requests_num == 1:
+                    res_html = etree.HTML(res.text, parser=etree.HTMLParser(encoding="utf-8"))
+                    li_infos = res_html.xpath('//ol[@class="breadcrumb__list"]//li')
+                    if li_infos != None:
+                        li_text = ''
+                        for li_info in li_infos:
+                            l = etree.tostring(li_info, method='html', with_tail=False, encoding='utf-8').decode()
+                            li_text += (self.filter_html_label(l, 1) + "/")
+                        li_text = li_text.rstrip('/')
+                        shop_item['detail_cat'] = li_text
+                else:
+                    res = requests.get(page_url)
+                    if res.status_code == 200:
+                        requests_num = 1
+                        res_html = etree.HTML(res.text, parser=etree.HTMLParser(encoding="utf-8"))
+                        li_infos = res_html.xpath('//ol[@class="Breadcrumbs-items"]//li')
+                        if li_infos != None:
+                            li_text = ''
+                            for li_info in li_infos:
+                                l = etree.tostring(li_info, method='html', with_tail=False,encoding='utf-8').decode()
+                                li_text += (self.filter_html_label(l, 1)+"/")
+                            li_text = li_text.rstrip('/')
+                            shop_item['detail_cat'] = li_text
+                    else:
+                        shop_item["detail_cat"] = 'HOME/' + names
             fill_attributes_and_description(shop_item, item_obj)
-
             shop_item["source"] = site_name
-            img_list = list(map(lambda obj: obj['src'], item_obj['images']))
-            ####### 第二个图片做为主图
-            # if len(img_list) > 1:
-            #     img_list_1 = [img_list[1]]
-            #     for i in img_list:
-            #         if i not in img_list_1:
-            #             img_list_1.append(i)
-            #     shop_item["images"] = img_list_1
-            # else:
-            #     shop_item["images"] = img_list
-            ####### 正常
-            shop_item["images"] = img_list
-            ###############################
-            shop_item["sku_list"] = list(
-                map(lambda sku: translate_sku_data(sku, item_obj['options']), item_obj['variants']))
+            shop_item["images"] = list(map(lambda obj: obj['src'], item_obj['images']))
+            shop_item["sku_list"] = list(map(lambda sku: translate_sku_data(sku, item_obj['options']), item_obj['variants']))
 
             shop_item["measurements"] = ["Weight: None", "Height: None", "Length: None", "Depth: None"]
             status_list = list()
@@ -222,16 +290,9 @@ class ShopweareiconicSpider(scrapy.Spider):
             shop_item["updated"] = int(time.time())
             shop_item['is_deleted'] = 0
 
-            # 1. 详情页没有类目信息的情况：直接从 product_type 字段解析类目，一般 product_type 会是最细一级类目的名称
-            shop_item["cat"] = parse_category_by_product_type(item_obj['product_type'], False)
-            shop_item["detail_cat"] = parse_category_by_product_type(item_obj['product_type'], True)
-
-            # 2. 详情页有类目信息的情况，注释掉上面两行，请求详情页，从详情页里解析类目信息
-            # requests.get ...
-
             yield shop_item
-            # print('=======')
-            print(shop_item)
+            # print(shop_item)
+
 
         if len(items_list) > 0:
             coms = list(parse.urlparse(response.url))
@@ -244,6 +305,6 @@ class ShopweareiconicSpider(scrapy.Spider):
                 url=next_page_url,
                 callback=self.parse,
                 cookies={
-                    # 'cart_currency': 'USD'
+                    'cart_currency': 'USD'
                 }
             )

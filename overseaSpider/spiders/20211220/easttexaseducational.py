@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-import itertools
 import re
 import json
 import time
 import scrapy
 import requests
 from hashlib import md5
-from bs4 import BeautifulSoup
+
 from overseaSpider.items import ShopItem, SkuAttributesItem, SkuItem
+from overseaSpider.util import item_check
 from overseaSpider.util.scriptdetection import detection_main
 from overseaSpider.util.utils import isLinux
 
-website = 'creelandgow'
+website = 'easttexaseducational'
 
 
 def get_sku_price(product_id, attribute_list):
@@ -30,8 +30,8 @@ def get_sku_price(product_id, attribute_list):
 
 class ThecrossdesignSpider(scrapy.Spider):
     name = website
-    allowed_domains = ['creelandgow.com']
-    start_urls = ['https://creelandgow.com/']
+    allowed_domains = ['easttexaseducational.com']
+    start_urls = ['https://easttexaseducational.com/']
 
     @classmethod
     def update_settings(cls, settings):
@@ -86,114 +86,57 @@ class ThecrossdesignSpider(scrapy.Spider):
 
     def parse(self, response):
         """获取全部分类"""
-        category_urls = response.xpath("//ul[@id='header-menu-desktop']/li[position()<7]/a/@href").getall()
-        category_cate = response.xpath("//ul[@id='header-menu-desktop']/li[position()<7]/a/text()").getall()
-        for c in range(len(category_urls)):
-            yield scrapy.Request(url=category_urls[c], callback=self.parse_list, meta={"cat":category_cate[c]})
+        category_urls = response.xpath("//div[contains(@class,'leo-top-menu')]//div[@class='dropdown-menu-inner']/div[@class='row']//div[@class='inner']/ul/li/a/@href").getall()
+        for category_url in category_urls:
+            yield scrapy.Request(url=category_url, callback=self.parse_list)
 
-    def parse_list(self,response):
-        cate= response.meta.get("cat")
-        detail_url_list = response.xpath("//div[@class='row bloc-item-product']/div/a/@href").getall()
+    def parse_list(self, response):
+        """商品列表页"""
+        detail_url_list = response.xpath("//div[@class='product-image']/a/@href").getall()
         for detail_url in detail_url_list:
-            yield scrapy.Request(url=detail_url, callback=self.parse_detail, meta={"cat":cate})
-        next_page_url = response.xpath("//link[@rel='next']/@href").get()
-        # print(next_page_url)
+            yield scrapy.Request(url=detail_url, callback=self.parse_detail)
+        next_page_url = response.xpath("//a[@rel='next']/@href").get()
         if next_page_url:
-            yield scrapy.Request(url=next_page_url, callback=self.parse_list, meta={"cat":cate})
+            yield scrapy.Request(url=next_page_url, callback=self.parse_list)
 
     def parse_detail(self, response):
         """详情页"""
         items = ShopItem()
         items["url"] = response.url
-        cate = response.meta.get("cat")
-        price = response.xpath("//div[@class='detail-content-product']//bdi/text()").get()
-        price = price.replace(',','')
+
+        price = response.xpath("//div[@class='current-price']/span/@content").get()
         items["original_price"] = price
         items["current_price"] = price
 
-        name = response.xpath("//h1/text()").get()
+        name = response.xpath("//section[@id='main']//h1[@class='h1 product-detail-name']/text()").get()
         items["name"] = name
 
-        cat_list = ['Home',cate]
+        cat_list = response.xpath("//ol/li/a/span/text()").getall()
         if cat_list:
             cat_list = [cat.strip() for cat in cat_list if cat.strip()]
             items["cat"] = cat_list[-1]
             items["detail_cat"] = '/'.join(cat_list)
 
-        description = response.xpath("//div[@class='info-detail-product']").getall()
+        description = response.xpath("//div[@class='product-description']").getall()
         items["description"] = self.filter_text(self.filter_html_label(''.join(description)))
-        items["source"] = website
-
-        images_list_tmp = response.xpath("//img[@class='img-responsive']/@src").getall()
-        images_list = []
-        for i in range(len(images_list_tmp)):
-            if(i<=1):
-                images_list.append(images_list_tmp[i])
+        items["source"] = 'easttexaseducational.com'
+        items["brand"] = response.xpath("//span[@itemprop='brand']/@content").get()
+        images_list = response.xpath("//ul[@class='product-images js-qv-product-images']/li[@class='thumb-container']/img/@data-image-large-src").getall()
+        for i in range(len(images_list)):
+            images_list[i]="https:"+images_list[i]
         items["images"] = images_list
-        items['brand'] = ''
-        sku_string = response.xpath("//form[@class='variations_form cart']/@data-product_variations").get()
+        label1 = response.xpath("//div[@class='data-table']/dl/dt/text()").getall()
+        # print(label1)
+        label2 = response.xpath("//div[@class='data-table']/dl/dd/text()").getall()
+        # print(label2)
+        attributes = []
+        if label1:
+            for i in range(len(label1)):
+                s = label1[i]+":"+label2[i]
+                attributes.append(s)
+            items["attributes"]=attributes
 
-        if not sku_string:
-            items["sku_list"] = []
-        else:
-            sku_json = json.loads(sku_string)
-            opt_name = []
-            if 'attribute_pa_size' in sku_json[0]['attributes']:
-                opt_name.append('size')
-            elif 'attribute_pa_name_variation' in sku_json[0]['attributes']:
-                opt_name.append('other')
-            else:
-                return
-            opt_value = []
-            opt_length = len(opt_name)
-            size_price = dict()
-            for i in range(opt_length):
-                value_temp = []
-                if opt_name[i]=='size':
-                    for j in sku_json:
-                        s = j['attributes']['attribute_pa_size']
-                        s=s.replace("-",'.')
-                        s=s.replace("%e2%80%b3",'')
-                        value_temp.append(s)
-                        size_price[s]=str(j['display_price'])
-                    opt_value.append(value_temp)
-                else:
-                    for j in sku_json:
-                        value_temp.append(j['attributes']['attribute_pa_name_variation'])
-                        size_price[j['attributes']['attribute_pa_name_variation']]=str(j['display_price'])
-                    opt_value.append(value_temp)
-            # print(opt_value)
-            attrs_list = []
-            for opt in itertools.product(*opt_value):
-                temp = dict()
-                for i in range(len(opt)):
-                    temp[opt_name[i]] = opt[i]
-                if len(temp):
-                    attrs_list.append(temp)
-            # print(attrs_list)
-
-            sku_list = list()
-            for attrs in attrs_list:
-                sku_info = SkuItem()
-                sku_attr = SkuAttributesItem()
-                other_temp = dict()
-
-                for attr in attrs.items():
-                    if attr[0] == 'size':
-                        sku_attr["size"] = attr[1]
-                        sku_info["current_price"] = size_price[sku_attr["size"]]
-                        sku_info["original_price"] = size_price[sku_attr["size"]]
-                    else:
-                        other_temp[attr[0]] = attr[1]
-                        sku_info["current_price"] = size_price[attr[1]]
-                        sku_info["original_price"] = size_price[attr[1]]
-                if len(other_temp):
-                    sku_attr["other"] = other_temp
-
-                sku_info["attributes"] = sku_attr
-
-                sku_list.append(sku_info)
-            items["sku_list"] = sku_list
+        items["sku_list"] = []
 
         items["measurements"] = ["Weight: None", "Height: None", "Length: None", "Depth: None"]
         status_list = list()
@@ -208,6 +151,7 @@ class ThecrossdesignSpider(scrapy.Spider):
         items["created"] = int(time.time())
         items["updated"] = int(time.time())
         items['is_deleted'] = 0
+        # item_check.check_item(items)
         # detection_main(items=items, website=website, num=10, skulist=True, skulist_attributes=True)
         # print(items)
         yield items

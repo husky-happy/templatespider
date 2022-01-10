@@ -10,9 +10,9 @@ from overseaSpider.util.utils import isLinux
 
 from overseaSpider.items import ShopItem, SkuAttributesItem, SkuItem
 
-site_name = 'phase5boards'  # 站名 如 'shopweareiconic'
-domain_name = 'phase5boards.com'  # 完整域名 如 'shopweareiconic.com'
-url_prefix = 'https://www.phase5boards.com'  # URL 前缀 如 'https://shopweareiconic.com'
+site_name = 'olikefit'  # 站名 如 'shopweareiconic'
+domain_name = 'www.olikefit.com'  # 完整域名 如 'shopweareiconic.com'
+url_prefix = 'https://www.olikefit.com'  # URL 前缀 如 'https://shopweareiconic.com'
 
 currency_json_data = None
 
@@ -117,7 +117,7 @@ def filter_text(input_text):
     return re.sub(r'\s+', ' ', input_text)
 
 
-class ShopweareiconicSpider(scrapy.Spider):
+class ShopifySpider(scrapy.Spider):
     name = site_name
     allowed_domains = [domain_name]
 
@@ -128,15 +128,14 @@ class ShopweareiconicSpider(scrapy.Spider):
         system = isLinux()
         if not system:
             # 如果不是服务器, 则修改相关配置
-            # 'CLOSESPIDER_ITEMCOUNT' : 10,#检测个数
             custom_debug_settings["HTTPCACHE_ENABLED"] = False
             custom_debug_settings["MONGODB_SERVER"] = "127.0.0.1"
         settings.setdict(custom_debug_settings or {}, priority='spider')
 
     def __init__(self, **kwargs):
-        super(ShopweareiconicSpider, self).__init__(**kwargs)
+        super(ShopifySpider, self).__init__(**kwargs)
         self.counts = 0
-        setattr(self, 'author', "叶复")
+        setattr(self, 'author', "彦泽")
 
     is_debug = True
     custom_debug_settings = {
@@ -192,19 +191,7 @@ class ShopweareiconicSpider(scrapy.Spider):
             fill_attributes_and_description(shop_item, item_obj)
 
             shop_item["source"] = site_name
-            img_list = list(map(lambda obj: obj['src'], item_obj['images']))
-            ####### 第二个图片做为主图
-            # if len(img_list) > 1:
-            #     img_list_1 = [img_list[1]]
-            #     for i in img_list:
-            #         if i not in img_list_1:
-            #             img_list_1.append(i)
-            #     shop_item["images"] = img_list_1
-            # else:
-            #     shop_item["images"] = img_list
-            ####### 正常
-            shop_item["images"] = img_list
-            ###############################
+            shop_item["images"] = list(map(lambda obj: obj['src'], item_obj['images']))
             shop_item["sku_list"] = list(
                 map(lambda sku: translate_sku_data(sku, item_obj['options']), item_obj['variants']))
 
@@ -229,9 +216,11 @@ class ShopweareiconicSpider(scrapy.Spider):
             # 2. 详情页有类目信息的情况，注释掉上面两行，请求详情页，从详情页里解析类目信息
             # requests.get ...
 
+            # 运营要求：该站第二张图作为主图
+            # if len(shop_item["images"]) >= 2:
+            #     shop_item["images"][0], shop_item["images"][1] = shop_item["images"][1], shop_item["images"][0]
+
             yield shop_item
-            # print('=======')
-            print(shop_item)
 
         if len(items_list) > 0:
             coms = list(parse.urlparse(response.url))

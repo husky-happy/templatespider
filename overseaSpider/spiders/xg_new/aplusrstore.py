@@ -10,9 +10,9 @@ from overseaSpider.util.utils import isLinux
 
 from overseaSpider.items import ShopItem, SkuAttributesItem, SkuItem
 
-site_name = 'phase5boards'  # 站名 如 'shopweareiconic'
-domain_name = 'phase5boards.com'  # 完整域名 如 'shopweareiconic.com'
-url_prefix = 'https://www.phase5boards.com'  # URL 前缀 如 'https://shopweareiconic.com'
+site_name = 'aplusrstore'  # 站名 如 'shopweareiconic'
+domain_name = 'aplusrstore.com'  # 完整域名 如 'shopweareiconic.com'
+url_prefix = 'https://aplusrstore.com'  # URL 前缀 如 'https://shopweareiconic.com'
 
 currency_json_data = None
 
@@ -24,6 +24,7 @@ def convert_currency(price):
     # return '${:.2f}'.format(price * currency_json_data[_from] / currency_json_data[to])
     # 如无需转换：
     return '{:.2f}'.format(price)
+
 
 
 # 把 shopify 格式的 SKU 信息转换成我们的格式，一般不用改
@@ -39,7 +40,7 @@ def translate_sku_data(raw_sku_data, options_arr):
     for i in range(3):
         optionTitle = raw_sku_data['option' + str(i + 1)]
         if optionTitle and options_arr[i]:
-            optionName = options_arr[i]['name'].strip()
+            optionName = options_arr[i]['name'].strip().replace(".",'')
             if 'size' in optionName.lower():
                 sku_attributes_item['size'] = optionTitle
             elif 'color' in optionName.lower() or 'colour' in optionName.lower():
@@ -136,7 +137,7 @@ class ShopweareiconicSpider(scrapy.Spider):
     def __init__(self, **kwargs):
         super(ShopweareiconicSpider, self).__init__(**kwargs)
         self.counts = 0
-        setattr(self, 'author', "叶复")
+        setattr(self, 'author', "汀幡")
 
     is_debug = True
     custom_debug_settings = {
@@ -183,7 +184,7 @@ class ShopweareiconicSpider(scrapy.Spider):
             shop_item = ShopItem()
 
             shop_item["url"] = url_prefix + '/products/' + str(item_obj['handle'])
-            shop_item["brand"] = item_obj['vendor']
+            shop_item["brand"] = filter_text(item_obj['vendor'])
             shop_item["name"] = item_obj['title']
 
             shop_item["current_price"] = item_display_price(item_obj['variants'])
@@ -231,7 +232,7 @@ class ShopweareiconicSpider(scrapy.Spider):
 
             yield shop_item
             # print('=======')
-            print(shop_item)
+            # print(shop_item)
 
         if len(items_list) > 0:
             coms = list(parse.urlparse(response.url))

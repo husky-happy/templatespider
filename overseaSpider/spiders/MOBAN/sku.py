@@ -177,6 +177,7 @@ class ThecrossdesignSpider(scrapy.Spider):
 
                 sku_info["current_price"] = items["current_price"]
                 sku_info["original_price"] = items["original_price"]
+                sku_info["url"] = items["url"]
                 sku_info["attributes"] = sku_attr
                 img_url = "https://d2gik7xihfa6t2.cloudfront.net/master/product/"
                 productid = response.xpath("//input[@name='nu[articlenr]']/@value").get()

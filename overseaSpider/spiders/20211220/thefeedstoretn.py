@@ -15,14 +15,14 @@ from overseaSpider.util.utils import isLinux
 # !/usr/bin/env python
 # -*- coding: UTF-8 -*-
 '''=================================================
-@Project -> File   ：templatespider -> pufferbelliestoys
+@Project -> File   ：templatespider -> thefeedstoretn
 @IDE    ：PyCharm
 @Author ：Mr. Husky
-@Date   ：2021/12/14 16:51
+@Date   ：2021/12/20 16:23
 @Desc   ：
 =================================================='''
 
-website = 'pufferbelliestoys'
+website = 'thefeedstoretn'
 
 
 def get_sku_price(product_id, attribute_list):
@@ -41,8 +41,8 @@ def get_sku_price(product_id, attribute_list):
 
 class ThecrossdesignSpider(scrapy.Spider):
     name = website
-    allowed_domains = ['pufferbelliestoys.com']
-    start_urls = ['https://www.pufferbelliestoys.com/']
+    allowed_domains = ['thefeedstoretn.com']
+    start_urls = ['https://www.thefeedstoretn.com/']
 
     @classmethod
     def update_settings(cls, settings):
@@ -121,51 +121,61 @@ class ThecrossdesignSpider(scrapy.Spider):
 
     def parse(self, response):
         """获取全部分类"""
-        category_urls = ['https://www.pufferbelliestoys.com/shop']
+        category_urls = ['http://www.thefeedstoretn.com/category-s/3575.htm',
+                         'http://www.thefeedstoretn.com/category-s/4280.htm',
+                         'http://www.thefeedstoretn.com/category-s/4000.htm',
+                         'http://www.thefeedstoretn.com/category-s/3573.htm',
+                         'http://www.thefeedstoretn.com/category-s/3574.htm',
+                         'http://www.thefeedstoretn.com/category-s/4124.htm',
+                         'http://www.thefeedstoretn.com/category-s/3576.htm',
+                         'http://www.thefeedstoretn.com/category-s/3604.htm',
+                         'http://www.thefeedstoretn.com/category-s/4236.htm',
+                         'http://www.thefeedstoretn.com/category-s/4237.htm',
+                         'http://www.thefeedstoretn.com/category-s/4075.htm',
+                         'http://www.thefeedstoretn.com/category-s/4279.htm']
         for category_url in category_urls:
-            yield scrapy.Request(url=category_url, callback=self.parse_brand)
-
-    def parse_brand(self, response):
-        category_urls = response.xpath("//table[@class='shop-category-table']//tr/td/div/a/@href").getall()
-        category_brand = response.xpath("//table[@class='shop-category-table']//tr/td/div/a/span/text()").getall()
-        for c in range(len(category_urls)):
-            yield scrapy.Request(url=category_urls[c], callback=self.parse_list, meta={"cat": category_brand[c]})
+            yield scrapy.Request(url=category_url, callback=self.parse_list, meta={"page":1})
 
     def parse_list(self, response):
         """商品列表页"""
-        cate = response.meta.get("cat")
-        detail_url_list = response.xpath("//div[@class='product-entry']/a/@href").getall()
-        # detail_url_list = ['https://www.pufferbelliestoys.com/kel-12esmina/kellytoy/12-squishmallow-esmina-the-fairy']
+        page = response.meta.get("page")
+        detail_url_list = response.xpath("//div[@class='v-product']/a[@class='v-product__img']/@href").getall()
         for detail_url in detail_url_list:
-            yield scrapy.Request(url=detail_url, callback=self.parse_detail, meta={"cat":cate})
-        next_page_url = response.xpath("//a[@title='next page']/@href").get()
-        if next_page_url:
-            yield scrapy.Request(url=next_page_url, callback=self.parse_list, meta={"cat":cate})
+            yield scrapy.Request(url=detail_url, callback=self.parse_detail)
+        # next_page_url = response.xpath("//btn[@class='btn btn-default btn-lg']/text()").get()
+        if page<=3:
+            page = page + 1
+            url = response.url
+            if url.find("page")!=-1:
+                index= url.find("page")
+                next_page_url = url[:index+5]+ str(page)
+            else:
+                next_page_url = url + '?searching=Y&sort=5&show=30&page=' + str(page)
+            yield scrapy.Request(url=next_page_url, callback=self.parse_list, meta={"page":page})
 
     def parse_detail(self, response):
         """详情页"""
         items = ShopItem()
         items["url"] = response.url
 
-        cate = response.meta.get("cat")
-
-        price = response.xpath("//div[@class='buy border_bottom']//span[@class='price']/text()").get()
-        price = self.price_fliter(price)
+        price = response.xpath("//span[@itemprop='price']/@content").get()
+        if not price:
+            return
         items["original_price"] = price
-        items["current_price"] = price
+        items["current_price"] = items["original_price"]
 
-        name = response.xpath("//h1/text()").get()
+        name = response.xpath("//span[@itemprop='name']/text()").get()
         items["name"] = name
 
-        cat_list = [cate, name]
+        cat_list = response.xpath("//td[@class='vCSS_breadcrumb_td']/b/a/text()").getall()
         if cat_list:
             cat_list = [cat.strip() for cat in cat_list if cat.strip()]
             items["cat"] = cat_list[-1]
             items["detail_cat"] = '/'.join(cat_list)
 
-        description = response.xpath("//div[@class='description']").getall()
+        description = response.xpath("//span[@id='product_description']").getall()
         items["description"] = self.filter_text(self.filter_html_label(''.join(description)))
-        items["source"] = 'pufferbelliestoys.com'
+        items["source"] = 'thefeedstoretn.com'
 
         # attr1_list = response.xpath("//div[@class='single-car-data']/table//tr/td[1]/text()").getall()
         # attr2_list = response.xpath("//div[@class='single-car-data']/table//tr/td[2]/text()").getall()
@@ -174,25 +184,16 @@ class ThecrossdesignSpider(scrapy.Spider):
         #     attribute.append(attr1_list[a] + ":" + attr2_list[a])
         # items["attributes"] = attribute
 
-        images_list = response.xpath("//ul[@id='thumbnails']/li/img/@src").getall()
+        images_list = response.xpath("//a[@id='product_photo_zoom_url']/@href").getall()
         if not images_list:
-            images_list = response.xpath("//div[@id='image_view_box']/a/img/@src").getall()
-        for i in range(len(images_list)):
-            if images_list[i].find("noimage")!=-1 or images_list[i].find("png")!=-1:
-                return
-            index = -1
-            if images_list[i].find(".136x136")!=-1:
-                index = images_list[i].find(".136x136")
-            if images_list[i].find(".200x200")!=-1:
-                index = images_list[i].find(".200x200")
-            if index!=-1:
-                images_list[i]="https:"+images_list[i][:index]+".jpg"
-            # images_list[i] = "http:" + images_list[i]
-        if len(images_list)==0:
             return
+        for i in range(len(images_list)):
+            if images_list[i].find("cdn")!=-1:
+                images_list[i] = "https:" + images_list[i]
+            else:
+                images_list[i] = 'http://www.thefeedstoretn.com/'+images_list[i]
         items["images"] = images_list
-        brand = response.xpath("//li[@class='spec-brand']//a/text()").get()
-        items["brand"] = brand
+        items["brand"] = ''
 
         items["sku_list"] = []
 

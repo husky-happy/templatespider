@@ -10,9 +10,9 @@ from overseaSpider.util.utils import isLinux
 
 from overseaSpider.items import ShopItem, SkuAttributesItem, SkuItem
 
-site_name = 'phase5boards'  # 站名 如 'shopweareiconic'
-domain_name = 'phase5boards.com'  # 完整域名 如 'shopweareiconic.com'
-url_prefix = 'https://www.phase5boards.com'  # URL 前缀 如 'https://shopweareiconic.com'
+site_name = 'urbanhome'  # 站名 如 'shopweareiconic'
+domain_name = 'urbanhome.com'  # 完整域名 如 'shopweareiconic.com'
+url_prefix = 'https://urbanhome.com'  # URL 前缀 如 'https://shopweareiconic.com'
 
 currency_json_data = None
 
@@ -136,7 +136,7 @@ class ShopweareiconicSpider(scrapy.Spider):
     def __init__(self, **kwargs):
         super(ShopweareiconicSpider, self).__init__(**kwargs)
         self.counts = 0
-        setattr(self, 'author', "叶复")
+        setattr(self, 'author', "若白")
 
     is_debug = True
     custom_debug_settings = {
@@ -231,7 +231,7 @@ class ShopweareiconicSpider(scrapy.Spider):
 
             yield shop_item
             # print('=======')
-            print(shop_item)
+            # print(shop_item)
 
         if len(items_list) > 0:
             coms = list(parse.urlparse(response.url))
