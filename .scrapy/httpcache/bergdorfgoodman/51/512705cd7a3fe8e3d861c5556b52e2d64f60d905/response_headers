@@ -1,0 +1,30 @@
+X-Frame-Options: SAMEORIGIN
+X-Frame-Options: SAMEORIGIN
+Expires: Sat, 04 Dec 1993 21:29:02 GMT
+Cache-Control: no-cache
+P3P: CP="CAO DSP CURa TAIa PSAo PSDo CONi OUR DELa IND PHY ONL UNI PUR COM NAV INT CNT STA PRE"
+Pragma: no-cache
+Content-Type: text/html
+Via: 1.1 WB:24000, 1.1 varnish, 1.1 varnish
+X-Oneagent-Js-Injection: true
+X-Ruxit-Js-Agent: true
+Content-Encoding: gzip
+Set-Cookie: AGA=""; path=/; secure; Max-Age=2147483647; Expires=Tue, 31-Jan-2090 05:31:56 GMT
+Set-Cookie: JSESSIONID=ZdFCixqHUm8bPTCq53SlwVWI_QPbl1J8ZNLWoKy2.jsession; path=/
+Set-Cookie: SPCR=1; path=/; secure; Max-Age=2592000; Expires=Sat, 12-Feb-2022 02:17:49 GMT
+Set-Cookie: _optanalytics=""; path=/; secure
+Set-Cookie: profile_data=%7B%22firstName%22%3A%22%22%2C%22currencyPreference%22%3A%22USD%22%2C%22countryPreference%22%3A%22US%22%2C%22sessionExpired%22%3Afalse%2C%22securityStatus%22%3A%22Anonymous%22%2C%22cartItemCount%22%3A0%7D; path=/; secure; Max-Age=2592000; Expires=Sat, 12-Feb-2022 02:17:49 GMT
+Set-Cookie: tms_data="{DT-2017.03}a3HwxssoiZzaMm5Pj2Bv6L13Gv8Ad/WZkJm2zLBiJ21ld4dfj9JnVCkhgm80R6HP7xq2mB+8hifNNcO91uyLeEFeMZtOQA406+Ht/s9AE+TfcYb/sMCrG5GtCWrOFhGcgoN5MKuLYDMlj6mQ0OjfPW1iVtMbd9Hi4Mk+yx4yZIi+wIEacND2v0yTe3M4NNS9SFFpjlsimIJzzKJyv9euiS7OkVBY+GUZF+ecU+kOb0bDV95v1JXbEap0WdnnZKEWr1bSVdLtV3YL+wJ35sjOS3Jon/EvBYTSJNYqcXMGjZtDDYYaL89+JdL7JpIKrmmRshJZi/ScaaRXXVL4yctoNrO743/x7UlvBPuoDUtTizU4kmkms2yRa4ls+pmS+Sl/dICbyH0ULzWe1TwUutTMkTiZQDhoFs2ju/fPGKxNvPevWTDX/yHg4qfwkDQ+IiOC3MNbpm4ZUdKZ4DyWzdy1BQfwtpEgBXJC/J23yoLJkLfzztXCK3o3/uNcwdMa70921zcpB4u5NPtXM2JPamlzxFXsYjSn0Ex7uWzt8TfhE1OqdcCg2iP/iKqMSd/H11i+xIN0LxrkyzcneLN/46/gDU2hhZ0I3BHoZ4FG5fEYN/mHkMO/aPXYr1iaNO3QzJOEkfaafJKBrj2hp4ycS2st0iiuOzqX9tWbSQtqaZzIKJOgkcfwr5D2nXaUS62GfchBu9i0q0U+cqWP+bzIRcSuAFY+Gr5Hw6LHBgKtXfU10OM83wCX+3vDYgFUVjDDiOaAIQjfWIeVUK5kGkFsR1IwGCKSHicLwV7QQSKFghtCH4qVAlMv61bIQ/llIovxxZVsMx9E7rMWoFU3nm4SX/mmiSfhe2DZZkglhhNbNTUSlyXNPydieLzD7y87RuY8UR2bLngd988MNBML0wW7fQN4qrNY7y/7tjxRQSinf9PjrDx3So79Nw6+jJQ9ik5UaXEC"; Version=1; Path=/; Secure; HttpOnly; Max-Age=2592000; Expires=Sat, 12-Feb-2022 02:17:49 GMT
+Set-Cookie: TS01e9147b=01d3b151d5e949c9c24db1213c1f93b5c008f2fdd5fe1e2e9df0ab53f002d9c453cbec3a14ab134faca01a12218c7c4036c88f44fd; Path=/; Domain=.www.bergdorfgoodman.com
+Set-Cookie: _pxhd=xiQR6hghXdsYYjYdBjVGOBKmvH/WMX8EM7eeFyG8jKaIyhgcJP6-oAS5jssBgdzKzaGx8UisA9LGqWFt1GcUKw==:VtPaPQC0evLL78nZgaKOvUFyCpPl3sUbaRk5gPXElmXsIFdx4/rv4VjPbG-c6nkNtITXu3NE4GtCadJfHA4sQDqVxnYgF3ZQSxUqKOk9kwA=; Expires=Fri, 13 Jan 2023 02:17:50 GMT; path=/;
+Server-Timing: dtRpid;desc="1272701276"
+True-Client-Ip: 124.160.31.114
+Accept-Ranges: bytes
+X-Timer: S1642040269.390616,VS0,VE1088
+Fastly-Restarts: 1
+Date: Thu, 13 Jan 2022 02:17:50 GMT
+X-Served-By: cache-mdw17335-MDW, cache-nrt18346-NRT
+X-Cache: MISS, MISS
+X-Cache-Hits: 0, 0
+Vary: Accept-Encoding
+Strict-Transport-Security: max-age=31557600; includeSubDomains; preload

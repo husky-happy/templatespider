@@ -1,0 +1,18 @@
+Date: Mon, 10 Jan 2022 09:27:44 GMT
+Content-Type: text/javascript; charset=utf-8
+X-Sorting-Hat-Podid: 70
+X-Sorting-Hat-Shopid: 6156353607
+Vary: Accept-Encoding
+X-Shopify-Stage: production
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Permitted-Cross-Domain-Policies: none
+X-Xss-Protection: 1; mode=block
+X-Dc: gcp-us-central1,gcp-us-central1,gcp-us-central1
+Content-Encoding: gzip
+X-Request-Id: 8c7f4146-46b7-4ae0-a48a-f6ddd8b60afd
+Cf-Cache-Status: DYNAMIC
+Expect-Ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+Server: cloudflare
+Cf-Ray: 6cb4df0549797e6e-LAX
+Alt-Svc: h3=":443"; ma=86400, h3-29=":443"; ma=86400, h3-28=":443"; ma=86400, h3-27=":443"; ma=86400

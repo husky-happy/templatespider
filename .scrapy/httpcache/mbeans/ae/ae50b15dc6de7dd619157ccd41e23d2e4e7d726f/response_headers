@@ -1,0 +1,37 @@
+Date: Mon, 10 Jan 2022 09:27:52 GMT
+Content-Type: application/json; charset=utf-8
+X-Sorting-Hat-Podid: 70
+X-Sorting-Hat-Shopid: 6156353607
+X-Storefront-Renderer-Rendered: 1
+Set-Cookie: secure_customer_sig=; path=/; expires=Tue, 10 Jan 2023 09:27:52 GMT; secure; HttpOnly
+Set-Cookie: localization=US; path=/; expires=Mon, 24 Jan 2022 09:27:52 GMT
+Set-Cookie: _shopify_country=United+States; path=/; expires=Mon, 10 Jan 2022 09:57:52 GMT
+Set-Cookie: cart_currency=USD; path=/; expires=Mon, 24 Jan 2022 09:27:52 GMT
+Set-Cookie: _y=44be21dc-b40e-4111-838f-85e6bb5e9ac8; Expires=Tue, 10-Jan-23 09:27:52 GMT; Domain=mbeans.com; Path=/; SameSite=Lax
+Set-Cookie: _s=21df80cb-3437-429e-84a1-ae6e65a16f3c; Expires=Mon, 10-Jan-22 09:57:52 GMT; Domain=mbeans.com; Path=/; SameSite=Lax
+Set-Cookie: _shopify_y=44be21dc-b40e-4111-838f-85e6bb5e9ac8; Expires=Tue, 10-Jan-23 09:27:52 GMT; Domain=mbeans.com; Path=/; SameSite=Lax
+Set-Cookie: _shopify_s=21df80cb-3437-429e-84a1-ae6e65a16f3c; Expires=Mon, 10-Jan-22 09:57:52 GMT; Domain=mbeans.com; Path=/; SameSite=Lax
+Etag: cacheable:6658491f43a555fc531f685015c53c56
+X-Alternate-Cache-Key: cacheable:d3af9b05267845290347a24b1944dc0f
+Content-Encoding: gzip
+X-Cache: miss
+X-Frame-Options: DENY
+Content-Security-Policy: block-all-mixed-content; frame-ancestors 'none'; upgrade-insecure-requests;
+Access-Control-Allow-Origin: *
+Strict-Transport-Security: max-age=7889238
+X-Shopid: 6156353607
+X-Shardid: 70
+Vary: Accept
+Content-Language: en
+X-Shopify-Stage: production
+X-Dc: gcp-us-central1,gcp-us-central1,gcp-us-central1
+X-Request-Id: af118b12-1df5-4990-ac6a-17b87abcd3f6
+X-Permitted-Cross-Domain-Policies: none
+X-Xss-Protection: 1; mode=block
+X-Download-Options: noopen
+X-Content-Type-Options: nosniff
+Cf-Cache-Status: DYNAMIC
+Expect-Ct: max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"
+Server: cloudflare
+Cf-Ray: 6cb4df31e87a7e6e-LAX
+Alt-Svc: h3=":443"; ma=86400, h3-29=":443"; ma=86400, h3-28=":443"; ma=86400, h3-27=":443"; ma=86400
