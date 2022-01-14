@@ -10,7 +10,7 @@ import pymongo
 import platform
 
 from itemadapter import ItemAdapter
-from pybloom_live import ScalableBloomFilter
+# from pybloom_live import ScalableBloomFilter
 
 # Define your item pipelines here
 #
@@ -63,7 +63,7 @@ class OverseaspiderPipeline(object):
         dirname = str(pathlib.Path.cwd()) + '/blm/' + settings['MONGODB_DB']
 
         # 布隆过滤
-        self.df = ScalableBloomFilter(initial_capacity=self.CrawlCar_Num, error_rate=0.01)
+        # self.df = ScalableBloomFilter(initial_capacity=self.CrawlCar_Num, error_rate=0.01)
         # self.df = BloomFilter(capacity=self.CrawlCar_Num, error_rate=0.01)
 
         # read
